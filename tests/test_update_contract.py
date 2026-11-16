@@ -97,6 +97,23 @@ class UpdateContractTests(unittest.TestCase):
             with self.subTest(token=token):
                 self.assertIn(token, installer)
 
+    def test_canonical_repository_and_publisher(self):
+        root_url = "https://github.com/kaua-silbershlach-parodes/hostinger-simulator-mcp"
+        api_url = "https://api.github.com/repos/kaua-silbershlach-parodes/hostinger-simulator-mcp"
+        updater = (ROOT / "tools/update.ps1").read_text(encoding="utf-8-sig")
+        installer = (ROOT / "packaging/windows/installer.iss").read_text(encoding="utf-8")
+        html = (ROOT / "index.html").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn(api_url + "/releases?per_page=20", updater)
+        self.assertIn(root_url + "/releases/download/", updater)
+        self.assertIn("AppPublisher=A Elite Estrangeira", installer)
+        self.assertIn("AppPublisherURL=" + root_url, installer)
+        self.assertIn(root_url, html)
+        self.assertIn(root_url, readme)
+        for old_owner in ("the-" + "forbbiden-knowledge", "the-" + "forbidden-knowledge"):
+            for content in (updater, installer, html, readme):
+                self.assertNotIn(old_owner, content.lower())
+
     def test_cmake_copies_updater_and_version_beside_desktop_binary(self):
         cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
         self.assertIn("tools/update.ps1", cmake)

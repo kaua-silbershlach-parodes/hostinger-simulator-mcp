@@ -17,9 +17,9 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $script:ProductTitle = 'Hostinger Simulator — Atualizador'
 $script:AllowedFiles = @('simulator_desktop.exe','simulator.exe','VERSION.txt','ui/index.html','ui/app.js','ui/styles.css','ui/favicon.ico','tools/update.ps1')
-$script:ApiUrl = 'https://api.github.com/repos/the-forbbiden-knowledge/hostinger-simulator-mcp/releases?per_page=20'
+$script:ApiUrl = 'https://api.github.com/repos/kaua-silbershlach-parodes/hostinger-simulator-mcp/releases?per_page=20'
 $script:AssetName = 'hostinger-simulator-windows-x64.zip'
-$script:AssetUrlPrefix = 'https://github.com/the-forbbiden-knowledge/hostinger-simulator-mcp/releases/download/'
+$script:AssetUrlPrefix = 'https://github.com/kaua-silbershlach-parodes/hostinger-simulator-mcp/releases/download/'
 
 function Show-Notice {
     param([string]$Message, [System.Windows.Forms.MessageBoxIcon]$Icon = [System.Windows.Forms.MessageBoxIcon]::Information)

@@ -14,8 +14,8 @@
 AppId={{8B3EBC52-8D8B-4F4C-A7D4-7F56F0C6B8C1}
 AppName={#ProductName}
 AppVersion={#AppVersion}
-AppPublisher=The Forbidden Knowledge
-AppPublisherURL=https://github.com/the-forbbiden-knowledge/hostinger-simulator-mcp
+AppPublisher=A Elite Estrangeira
+AppPublisherURL=https://github.com/kaua-silbershlach-parodes/hostinger-simulator-mcp
 DefaultDirName={localappdata}\Programs\HostingerSimulator
 DefaultGroupName={#ProductName}
 DisableProgramGroupPage=yes
