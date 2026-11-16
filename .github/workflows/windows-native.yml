@@ -1,0 +1,69 @@
+name: Windows native build
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  build-test:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Guard public source snapshot
+        run: |
+          python -m unittest discover -s tests -p "test_publication_guard.py" -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/publication_guard.py --root .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m unittest discover -s tests -p "test_git_publication_gate.py" -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/git_publication_gate.py --staged --root .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Validate structural release evidence gate (synthetic)
+        run: |
+          python -m unittest discover -s tests -p "test_operational_evidence_gate.py" -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Validate offline authorization contract (synthetic)
+        run: |
+          python -W error::ResourceWarning -m unittest discover -s tests -p "test_offline_*.py" -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify public homepage, original triangle and site navigation
+        run: |
+          python -m unittest discover -s tests -p "test_public_academy_source.py" -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m unittest discover -s tests -p "test_public_navigation_source.py" -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify local WebView2 boundary and GitHub-only updater
+        run: |
+          python -m unittest discover -s tests -p "test_offline_desktop_source.py" -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m unittest discover -s tests -p "test_update_contract.py" -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File tests\test_update.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Configure
+        run: cmake --preset windows-msvc
+      - name: Build
+        run: cmake --build --preset windows-msvc --config Release
+      - name: Test
+        run: ctest --preset windows-msvc -C Release --output-on-failure
+      - name: Validate disposable recovery and integrity checks
+        env:
+          SIMULATOR_NATIVE_EXE: ${{ github.workspace }}/out/build/windows-msvc/Release/simulator.exe
+        run: |
+          python -m unittest discover -s tests -p "test_recovery_rehearsal.py" -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/recovery_rehearsal.py --simulator "$env:SIMULATOR_NATIVE_EXE"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Bound local child output and deadline under overload
+        run: |
+          python -m unittest discover -s tests -p "test_bounded_subprocess.py" -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify synthetic native telemetry and negative contracts
+        env:
+          SIMULATOR_NATIVE_EXE: ${{ github.workspace }}/out/build/windows-msvc/Release/simulator.exe
+        run: |
+          python -m unittest discover -s tests -p "test_preview_telemetry.py" -v
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/preview_telemetry.py --simulator "$env:SIMULATOR_NATIVE_EXE" --rounds 3
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

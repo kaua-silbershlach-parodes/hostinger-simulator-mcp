@@ -1,0 +1,61 @@
+name: Elixir OTP bridge integration
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  bridge-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Guard public source snapshot
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_publication_guard.py' -v
+          python3 tools/publication_guard.py --root .
+          python3 -m unittest discover -s tests -p 'test_git_publication_gate.py' -v
+          python3 tools/git_publication_gate.py --staged --root .
+      - name: Validate structural release evidence gate (synthetic)
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_operational_evidence_gate.py' -v
+      - name: Validate offline authorization contract (synthetic)
+        run: |
+          set -euo pipefail
+          python3 -W error::ResourceWarning -m unittest discover -s tests -p 'test_offline_*.py' -v
+      - name: Setup Erlang and Elixir
+        uses: erlef/setup-beam@54075bcc5e249e4758d363f27d099f55d843f124 # v1.24.1
+        with:
+          otp-version: '27.3.3'
+          elixir-version: '1.18.3'
+      - name: Configure local native preview
+        run: cmake --preset portable -DCMAKE_CXX_FLAGS=-Werror
+      - name: Build local native preview
+        run: cmake --build --preset portable --parallel 2
+      - name: Run all native Linux regression tests
+        run: ctest --preset portable --output-on-failure
+      - name: Validate disposable recovery and integrity checks
+        env:
+          SIMULATOR_NATIVE_EXE: ${{ github.workspace }}/out/build/portable/simulator
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_recovery_rehearsal.py' -v
+          python3 tools/recovery_rehearsal.py --simulator "$SIMULATOR_NATIVE_EXE"
+      - name: Bound local child output and deadline under overload
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_bounded_subprocess.py' -v
+      - name: Verify synthetic native telemetry and negative contracts
+        env:
+          SIMULATOR_NATIVE_EXE: ${{ github.workspace }}/out/build/portable/simulator
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_preview_telemetry.py' -v
+          python3 tools/preview_telemetry.py --simulator "$SIMULATOR_NATIVE_EXE" --rounds 3
+      - name: Exercise Elixir Port with real native executable
+        working-directory: elixir
+        env:
+          SIMULATOR_NATIVE_EXE: ${{ github.workspace }}/out/build/portable/simulator
+        run: mix test --trace
